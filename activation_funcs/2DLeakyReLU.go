@@ -10,7 +10,7 @@ func LeakyReLU_2D(arr [][]float64 ) [][]float64 {
 		z := []float64{}
 		y = append(y, z)
 		for j := 0; j < len(arr[i]); j++ {
-		y[i] = append(y[i], math.Max(0.1*arr[i][j], arr[i][j]))
+			y[i] = append(y[i], math.Max(0.1*arr[i][j], arr[i][j]))
 		}
 	}
 	return y
