@@ -14,3 +14,10 @@ func CatergoricalCrossEntropy(arr []float64, y []float64) float64 {
 	return total_loss
 }
 
+func CatergoricalCrossEntropy_derivative(arr []float64, y []float64) []float64 {
+	y = []float64{}
+	for i := 0; i < len(arr); i++ {
+		y = append(y, -y[i]/arr[i]+(1-y[i])/(1-arr[i]))
+	}
+	return y
+}
