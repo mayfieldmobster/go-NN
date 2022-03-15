@@ -220,6 +220,85 @@ func (m model) backward(y []float64){
 			}
 		}
 	}
-	if 
-	
+
+	if m.layer4.name != "nil" {
+		d_vals := []float64{}
+		for i := 0; i < len(m.layer4.weights); i++ {
+			for j:=0; j < len(m.layer4.weights[i]); j++ {
+				d_vals = append(d_vals, 0.0)
+				break
+			}
+		}
+		for k := 0; k < len(m.layer4.gradients); k++ {
+			for l:=0; l < len(m.layer4.gradients[k]); l++ {
+				d_vals[l] += m.layer4.gradients[k][l]
+
+			}
+		}
+	}
+	switch m.layer3.activation_func {
+	case "sigmoid":
+		d_vals = array_multiply(activation_funcs.sigmoid_derivative(m.layer3.outputs), d_vals) 
+	case "LeakyReLU":
+		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer3.outputs), d_vals)
+	case "tanh":
+		d_vals = array_multiply(activation_funcs.Tanh_derivative(m.layer3.outputs), d_vals)
+	case "ReLU":
+		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer3.outputs), d_vals)
+	case "softmax":
+		d_vals = array_multiply(activation_funcs.softmax_derivative(m.layer3.outputs), d_vals)
+	case "":
+		d_vals = d_vals
+	}
+
+	if m.layer3.name != "nil" {
+		for i := 0; i < len(m.layer3.weights); i++ {
+			m.layer4.gradients = append(m.layer3.gradients, []float64{})
+			for j:=0; j < len(m.layer3.weights[i]); j++ {
+				m.layer3.gradients[i] = append(m.layer3.gradients[i], d_vals[i]*m.layer2.activated_outputs[j]) 
+			}
+		}
+	}
+	if m.layer3.name != "nil" {
+		d_vals := []float64{}
+		for i := 0; i < len(m.layer3.weights); i++ {
+			for j:=0; j < len(m.layer3.weights[i]); j++ {
+				d_vals = append(d_vals, 0.0)
+				break
+			}
+		}
+		for k := 0; k < len(m.layer3.gradients); k++ {
+			for l:=0; l < len(m.layer3.gradients[k]); l++ {
+				d_vals[l] += m.layer3.gradients[k][l]
+
+			}
+		}
+	}
+
+	switch m.layer2.activation_func {
+	case "sigmoid":
+		d_vals = array_multiply(activation_funcs.sigmoid_derivative(m.layer2.outputs), d_vals) 
+	case "LeakyReLU":
+		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer2.outputs), d_vals)
+	case "tanh":
+		d_vals = array_multiply(activation_funcs.Tanh_derivative(m.layer2.outputs), d_vals)
+	case "ReLU":
+		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer2.outputs), d_vals)
+	case "softmax":
+		d_vals = array_multiply(activation_funcs.softmax_derivative(m.layer2.outputs), d_vals)
+	case "":
+		d_vals = d_vals
+	}
+	if m.layer2.name != "nil" {
+		for i := 0; i < len(m.layer2.weights); i++ {
+			m.layer4.gradients = append(m.layer2.gradients, []float64{})
+			for j:=0; j < len(m.layer2.weights[i]); j++ {
+				m.layer2.gradients[i] = append(m.layer2.gradients[i], d_vals[i]*m.layer1.activated_outputs[j]) 
+			}
+		}
+	}
+
+
+
+
 }
