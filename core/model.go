@@ -7,7 +7,6 @@ import "errors"
 
 type Layer struct {
 	input_size, num_neurons int
-	biases []float64
 	weights [][]float64
 	name, activation_func string
 	outputs []float64
@@ -30,7 +29,6 @@ func (l Layer) forward(input []float64) []float64 {
 		output := 0.0
 		for j := 0; j < len(l.weights[i]); j++ {
 			output += l.weights[i][j] * input[j]
-			output += l.biases[i]
 			outputs = append(outputs, output)
 		}
 	}
@@ -303,7 +301,7 @@ func (m model) weight_update(learning_rate float64) {
 	if m.layer4.name != "nil" {
 		for i := 0; i < len(m.layer4.weights); i++ {
 			for j:=0; j < len(m.layer4.weights[i]); j++ {
-				m.layer4.weights[i][j] += m.layer4.gradients[i][j]*learning_rate
+				m.layer4.weights[i][j] += -m.layer4.gradients[i][j]*learning_rate
 			}
 		}
 		m.layer4.gradients = [][]float64{}
@@ -311,7 +309,7 @@ func (m model) weight_update(learning_rate float64) {
 	if m.layer3.name != "nil" {
 		for i := 0; i < len(m.layer3.weights); i++ {
 			for j:=0; j < len(m.layer3.weights[i]); j++ {
-				m.layer3.weights[i][j] += m.layer3.gradients[i][j]*learning_rate
+				m.layer3.weights[i][j] += -m.layer3.gradients[i][j]*learning_rate
 			}
 		}
 		m.layer3.gradients = [][]float64{}
@@ -319,7 +317,7 @@ func (m model) weight_update(learning_rate float64) {
 	if m.layer2.name != "nil" {
 		for i := 0; i < len(m.layer2.weights); i++ {
 			for j:=0; j < len(m.layer2.weights[i]); j++ {
-				m.layer2.weights[i][j] += m.layer2.gradients[i][j]*learning_rate
+				m.layer2.weights[i][j] += -m.layer2.gradients[i][j]*learning_rate
 			}
 		}
 		m.layer2.gradients = [][]float64{}
@@ -346,4 +344,32 @@ func one_hot(label int, num_classes int) []float64 {
 		}
 	}
 	return output
+}
+
+func _2D_to_1D( arr [][]float64) []float64 {
+	output := []float64{}
+	for i := 0; i < len(arr); i++ {
+		for j := 0; j < len(arr[i]); j++ {
+			output = append(output, arr[i][j])
+		}
+	}
+	return output
+}
+
+func decrease_size(arr []float64) []float64 {
+	output := []float64{}
+	for i := 0; i < len(arr); i++ {
+		output = append(output, arr[i]/255.0)
+	}
+	return output
+}
+
+func unit8_to_float64(arr [][]uint8) [][]float64 {
+	output := [][]float64{}
+	for i := 0; i < len(arr); i++ {
+		output = append(output, []float64{})
+		for j := 0; j < len(arr[i]); j++ {
+			output[i] = append(output[i], float64(arr[i][j]))
+		}
+	}
 }
