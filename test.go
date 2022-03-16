@@ -1,9 +1,26 @@
 package main
 
-import "NN/activation_funcs"
-import "fmt"
-
+import (
+	"fmt"
+	"./mnist"
+)
+func printData(dataSet *mnist.DataSet, index int) {
+	data := dataSet.Data[index]
+	fmt.Println(data.Digit)			// print Digit (label)
+	mnist.PrintImage(data.Image)	// print Image
+}
 func main() {
-	arr := []float64{1, 2, 3, 4, 5}
-	fmt.Println(activation_funcs.Sigmoid(arr))
+	dataSet, err := mnist.ReadTrainSet("./mnist")
+	// or dataSet, err := mnist.ReadTestSet("./mnist")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(dataSet.N)		// number of data
+	fmt.Println(dataSet.W)		// image width [pixel]
+	fmt.Println(dataSet.H)		// image height [pixel]
+	for i := 0; i < 10; i++ {
+		printData(dataSet, i)
+	}
+	printData(dataSet, dataSet.N-1)
 }
