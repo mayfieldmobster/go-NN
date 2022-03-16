@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"./mnist"
+	"NN/mnist"
 )
 func printData(dataSet *mnist.DataSet, index int) {
 	data := dataSet.Data[index]
@@ -10,7 +10,7 @@ func printData(dataSet *mnist.DataSet, index int) {
 	mnist.PrintImage(data.Image)	// print Image
 }
 func main() {
-	dataSet, err := mnist.ReadTrainSet("./mnist")
+	dataSet, err := mnist.ReadTrainSet("c:/Users/Chris/go/src/NN/data")
 	// or dataSet, err := mnist.ReadTestSet("./mnist")
 	if err != nil {
 		fmt.Println(err)
@@ -23,4 +23,5 @@ func main() {
 		printData(dataSet, i)
 	}
 	printData(dataSet, dataSet.N-1)
+	fmt.Println(dataSet.Data[0].Image)
 }
