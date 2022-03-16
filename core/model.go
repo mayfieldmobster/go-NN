@@ -170,7 +170,7 @@ func (m model) forward(input []float64, y []float64) (float64, error) {
 }
 
 
-func (m model) backward(y []float64){
+func (m model) back(y []float64){
 	d_vals := []float64{}
 	switch m.loss_function {
 	case "cross_entropy":
@@ -297,8 +297,53 @@ func (m model) backward(y []float64){
 			}
 		}
 	}
+}
 
+func (m model) weight_update(learning_rate float64) {
+	if m.layer4.name != "nil" {
+		for i := 0; i < len(m.layer4.weights); i++ {
+			for j:=0; j < len(m.layer4.weights[i]); j++ {
+				m.layer4.weights[i][j] += m.layer4.gradients[i][j]*learning_rate
+			}
+		}
+		m.layer4.gradients = [][]float64{}
+	}
+	if m.layer3.name != "nil" {
+		for i := 0; i < len(m.layer3.weights); i++ {
+			for j:=0; j < len(m.layer3.weights[i]); j++ {
+				m.layer3.weights[i][j] += m.layer3.gradients[i][j]*learning_rate
+			}
+		}
+		m.layer3.gradients = [][]float64{}
+	}
+	if m.layer2.name != "nil" {
+		for i := 0; i < len(m.layer2.weights); i++ {
+			for j:=0; j < len(m.layer2.weights[i]); j++ {
+				m.layer2.weights[i][j] += m.layer2.gradients[i][j]*learning_rate
+			}
+		}
+		m.layer2.gradients = [][]float64{}
+	}
+}
 
+func (m model) train(training_data [][]float64, labels [][]float64 ,learning_rate float64, epochs int) {
+	for i := 0; i < epochs; i++ {
+		for j := 0; j < len(training_data); j++ {
+			m.forward(training_data[j], labels[j])
+			m.back(labels[j])
+			m.weight_update(learning_rate)
+		}
+	}
+}
 
-
+func one_hot(label int, num_classes int) []float64 {
+	output := []float64{}
+	for i := 0; i < num_classes; i++ {
+		if i == label {
+			output = append(output, 1.0)
+		} else {
+			output = append(output, 0.0)
+		}
+	}
+	return output
 }
