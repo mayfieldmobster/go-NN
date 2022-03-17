@@ -2,7 +2,7 @@ package activation_funcs
 
 import "math"
 
-func softmax(arr []float64) []float64 {
+func Softmax(arr []float64) []float64 {
 	sum := 0.0
 	for i := 0; i < len(arr); i++ {
 		sum += math.Exp(arr[i])
@@ -14,10 +14,10 @@ func softmax(arr []float64) []float64 {
 	return y
 }
 
-func softmax_derivative(arr []float64) []float64 {
+func Softmax_derivative(arr []float64) []float64 {
 	y := []float64{}
 	for i := 0; i < len(arr); i++ {
-		y = append(y, softmax(arr)[i]*(1-softmax(arr)[i]))
+		y = append(y, Softmax(arr)[i]*(1-Softmax(arr)[i]))
 	}
 	return y
 }

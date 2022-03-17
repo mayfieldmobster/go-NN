@@ -5,7 +5,7 @@ import "NN/loss_functions"
 import "math/rand"
 import "errors"
 
-type Layer struct {
+type layer struct {
 	input_size, num_neurons int
 	weights [][]float64
 	name, activation_func string
@@ -15,15 +15,15 @@ type Layer struct {
 }
 
 type model struct {
-	layer1 Layer
-	layer2 Layer
-	layer3 Layer
-	layer4 Layer
+	layer1 layer
+	layer2 layer
+	layer3 layer
+	layer4 layer
 	loss_function string
 }
 
 
-func (l Layer) forward(input []float64) []float64 {
+func (l layer) forward(input []float64) []float64 {
 	outputs := []float64{}
 	for i := 0; i < len(l.weights); i++ {
 		output := 0.0
@@ -38,11 +38,11 @@ func (l Layer) forward(input []float64) []float64 {
 }
 
 
-func (l Layer) activation(input []float64) []float64 {
+func (l layer) activation(input []float64) []float64 {
 	outputs := []float64{}
 	switch l.activation_func {
 	case "sigmoid":
-		outputs = activation_funcs.sigmoid(input)
+		outputs = activation_funcs.Sigmoid(input)
 	case "LeakyReLU":
 		outputs = activation_funcs.LeakyReLU(input)
 	case "tanh":
@@ -50,23 +50,16 @@ func (l Layer) activation(input []float64) []float64 {
 	case "ReLU":
 		outputs = activation_funcs.ReLU(input)
 	case "softmax":
-		outputs = activation_funcs.softmax(input)
+		outputs = activation_funcs.Softmax(input)
 	case "":
 		outputs = input
 	}
 	return outputs
 }
 
-func (l Layer) layer_init(input_node bool){
+func (l layer) layer_init(input_node bool){
 	for i:=0; i < l.num_neurons; i++ {
-		if input_node {
-			l.biases = append(l.biases, 0.0)
-			l.weights = append(l.weights, []float64{})
-		}else {
-			l.biases = append(l.biases, rand.Float64())
-			l.weights = append(l.weights, []float64{})
-		}
-		
+		l.weights = append(l.weights, []float64{})
 		for j:=0; j < l.input_size; j++ {
 			if input_node {
 				l.weights[i] = append(l.weights[i], 1.0)
@@ -198,7 +191,7 @@ func (m model) back(y []float64){
 	}
 	switch m.layer4.activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.sigmoid_derivative(m.layer4.outputs), d_vals) 
+		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer4.outputs), d_vals) 
 	case "LeakyReLU":
 		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer4.outputs), d_vals)
 	case "tanh":
@@ -206,7 +199,7 @@ func (m model) back(y []float64){
 	case "ReLU":
 		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer4.outputs), d_vals)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.softmax_derivative(m.layer4.outputs), d_vals)
+		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer4.outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
@@ -236,7 +229,7 @@ func (m model) back(y []float64){
 	}
 	switch m.layer3.activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.sigmoid_derivative(m.layer3.outputs), d_vals) 
+		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer3.outputs), d_vals) 
 	case "LeakyReLU":
 		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer3.outputs), d_vals)
 	case "tanh":
@@ -244,7 +237,7 @@ func (m model) back(y []float64){
 	case "ReLU":
 		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer3.outputs), d_vals)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.softmax_derivative(m.layer3.outputs), d_vals)
+		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer3.outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
@@ -275,7 +268,7 @@ func (m model) back(y []float64){
 
 	switch m.layer2.activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.sigmoid_derivative(m.layer2.outputs), d_vals) 
+		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer2.outputs), d_vals) 
 	case "LeakyReLU":
 		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer2.outputs), d_vals)
 	case "tanh":
@@ -283,7 +276,7 @@ func (m model) back(y []float64){
 	case "ReLU":
 		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer2.outputs), d_vals)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.softmax_derivative(m.layer2.outputs), d_vals)
+		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer2.outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
@@ -372,4 +365,5 @@ func unit8_to_float64(arr [][]uint8) [][]float64 {
 			output[i] = append(output[i], float64(arr[i][j]))
 		}
 	}
+	return output
 }
