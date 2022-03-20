@@ -3,69 +3,79 @@ package main
 import (
 	"NN/core"
 	"NN/mnist"
+	"fmt"
 )
+
 func main() {
 	data,err  := mnist.ReadTrainSet("c:/Users/Chris/go/src/NN/data")
-	if err == nil {
+	if err != nil {
 		return
 	}
 	inputs := [][]float64{}
-	labels := []float64{} 
+	labels := [][]float64{} 
 	for _,data := range data.Data{
-		inputs = append(inputs,core.decrease_size(core._2D_to_1D(core.unit8_to_float64(data.Image))))
-			labels = append(labels,float64(data.Digit))
+		inputs = append(inputs,core.Decrease_size(core.Array2D_to_1D(core.Unit8_to_float64(data.Image))))
+		labels = append(labels,core.One_hot(data.Digit,10))
 	}
-	input_layer := core.layer{
-		input_size:784,
-		num_neurons:32,
-		weights:[][]float64{},
-		name:"input_layer",
-		outpusts:[]float64{},
-		actiated_outputs:[]float64{},
-		activation_function:"sigmoid",
-		gradients:[][]float64{},
+	input_layer := &core.Layer{
+		Input_size:784,
+		Num_neurons:32,
+		Weights:[][]float64{},
+		Name:"input_layer",
+		Outputs:[]float64{},
+		Activated_outputs:[]float64{},
+		Activation_func:"sigmoid",
+		Gradients:[][]float64{},
 	}
-	hidden_layer1 := core.layer{
-		input_size:32,
-		num_neurons:10,
-		weights:[][]float64{},
-		name:"hidden_layer1",
-		outpusts:[]float64{},
-		actiated_outputs:[]float64{},
-		activation_function:"",
-		gradients:[][]float64{},
+	hidden_layer1 := &core.Layer{
+		Input_size:32,
+		Num_neurons:32,
+		Weights:[][]float64{},
+		Name:"hidden_layer1",
+		Outputs:[]float64{},
+		Activated_outputs:[]float64{},
+		Activation_func:"LeakyReLU",
+		Gradients:[][]float64{},
 	}
-	hidden_layer2 := core.layer{
-		input_size:10,
-		num_neurons:10,
-		weights:[][]float64{},
-		name:"hidden_layer2",
-		outpusts:[]float64{},
-		actiated_outputs:[]float64{},
-		activation_function:"sigmoid",
-		gradients:[][]float64{},
+	hidden_layer2 := &core.Layer{
+		Input_size:32,
+		Num_neurons:10,
+		Weights:[][]float64{},
+		Name:"hidden_layer2",
+		Outputs:[]float64{},
+		Activated_outputs:[]float64{},
+		Activation_func:"",
+		Gradients:[][]float64{},
 	}
-	output_layer := core.layer{
-		input_size:10,
-		num_neurons:10,
-		weights:[][]float64{},
-		name:"output_layer",
-		outpusts:[]float64{},
-		actiated_outputs:[]float64{},
-		activation_function:"softmax",
-		gradients:[][]float64{},
+	output_layer := &core.Layer{
+		Input_size:10,
+		Num_neurons:10,
+		Weights:[][]float64{},
+		Name:"output_layer",
+		Outputs:[]float64{},
+		Activated_outputs:[]float64{},
+		Activation_func:"softmax",
+		Gradients:[][]float64{},
 	}
-	input_layer.layer_init(true)
-	hidden_layer1.layer_init(false)
-	hidden_layer2.layer_init(false)
-	output_layer.layer_init(false)
+	input_layer.Layer_init(false)
+	hidden_layer1.Layer_init(false)
+	hidden_layer2.Layer_init(false)
+	output_layer.Layer_init(false)
 	
-	model := core.model{
+	model := core.Model{
 		Layer1:input_layer,
 		Layer2:hidden_layer1,
 		Layer3:hidden_layer2,
 		Layer4:output_layer,
-		loss_function:"catergorical_cross_entropy",
+		Loss_function:"cross_entropy",
 	}
-	model.train()
+	//fmt.Println(model.Layer4.Weights)
+	//fmt.Println(len(model.Layer2.Weights))
+	//fmt.Println(len(model.Layer2.Weights[0]))
+	//fmt.Println(output_layer.Weights)
+	
+	model.Train(inputs, labels, 0.01, 100)
+	fmt.Println("Accuracy:",model.Test(inputs, labels), "%")
+	fmt.Println(model.Layer4.Weights)
+
 }

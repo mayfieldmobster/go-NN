@@ -16,9 +16,9 @@ func MeanSquaredError(arr []float64, y []float64) float64 {
 }
 
 func MeanSquaredError_derivative(arr []float64, y []float64) []float64 {
-	y = []float64{}
+	d_loss := []float64{}
 	for i := 0; i < len(arr); i++ {
-		y = append(y, 2*(arr[i]-y[i]))
+		d_loss = append(d_loss, 2*(arr[i]-y[i]))
 	}
-	return y
+	return d_loss
 }

@@ -1,46 +1,58 @@
 package core
 
-import "NN/activation_funcs"
-import "NN/loss_functions"
-import "math/rand"
-import "errors"
+import (
+	"NN/activation_funcs"
+	"NN/loss_functions"
+	"errors"
+	"fmt"
+	"math/rand"
+	"time"
+)
 
-type layer struct {
-	input_size, num_neurons int
-	weights [][]float64
-	name, activation_func string
-	outputs []float64
-	activated_outputs []float64
-	gradients [][]float64
+
+type Layer struct {
+	Input_size, Num_neurons int
+	Weights [][]float64
+	Name, Activation_func string
+	Outputs []float64
+	Activated_outputs []float64
+	Gradients [][]float64
 }
 
-type model struct {
-	layer1 layer
-	layer2 layer
-	layer3 layer
-	layer4 layer
-	loss_function string
+type Model struct {
+	Layer1 *Layer
+	Layer2 *Layer
+	Layer3 *Layer
+	Layer4 *Layer
+	Loss_function string
 }
 
 
-func (l layer) forward(input []float64) []float64 {
+func (l *Layer) Forward(input []float64) []float64 {
+	fmt.Println("")
+	fmt.Println(l.Name)
+	fmt.Println(input)
 	outputs := []float64{}
-	for i := 0; i < len(l.weights); i++ {
+	for i := 0; i < len(l.Weights); i++ {
 		output := 0.0
-		for j := 0; j < len(l.weights[i]); j++ {
-			output += l.weights[i][j] * input[j]
-			outputs = append(outputs, output)
+		for j := 0; j < len(l.Weights[i]); j++ {
+			output += l.Weights[i][j] * input[j]
 		}
+		outputs = append(outputs, output)
 	}
-	l.outputs = outputs
-	l.activated_outputs = l.activation(outputs)
-	return l.activated_outputs
+	l.Outputs = outputs
+	l.Activated_outputs = l.Activation(outputs)
+
+	fmt.Println("Activated Outputs:",l.Activated_outputs)
+	fmt.Println("len(input):",len(input))
+	fmt.Println("len(l.Activated_outputs):",len(l.Activated_outputs))
+	return l.Activated_outputs
 }
 
 
-func (l layer) activation(input []float64) []float64 {
+func (l Layer) Activation(input []float64) []float64 {
 	outputs := []float64{}
-	switch l.activation_func {
+	switch l.Activation_func {
 	case "sigmoid":
 		outputs = activation_funcs.Sigmoid(input)
 	case "LeakyReLU":
@@ -57,19 +69,27 @@ func (l layer) activation(input []float64) []float64 {
 	return outputs
 }
 
-func (l layer) layer_init(input_node bool){
-	for i:=0; i < l.num_neurons; i++ {
-		l.weights = append(l.weights, []float64{})
-		for j:=0; j < l.input_size; j++ {
+func (l *Layer) Layer_init(input_node bool){
+	rand.Seed(time.Now().UTC().UnixNano())
+	for i:=0; i < l.Num_neurons; i++ {
+		l.Weights = append(l.Weights, []float64{})
+		for j:=0; j < l.Input_size; j++ {
+			//rand.Seed(time.Now().UTC().UnixNano())
 			if input_node {
-				l.weights[i] = append(l.weights[i], 1.0)
+				l.Weights[i] = append(l.Weights[i], 1.0)
 			}else {
-				l.weights[i] = append(l.weights[i], rand.Float64())}
+				if rand.Intn(2) == 0 {
+					l.Weights[i] = append(l.Weights[i], -rand.Float64())
+				}else {
+					l.Weights[i] = append(l.Weights[i], rand.Float64())
+				}
+			}
 		}
 	}
+	fmt.Println(l.Weights)
 }
 
-func array_multiply(arr1 []float64, arr2 []float64) []float64 {
+func Array_multiply(arr1 []float64, arr2 []float64) []float64 {
 	output := []float64{}
 	for i := 0; i < len(arr1); i++ {
 		output = append(output, arr1[i] * arr2[i])
@@ -77,7 +97,7 @@ func array_multiply(arr1 []float64, arr2 []float64) []float64 {
 	return output
 }
 
-func sum(arr []float64) float64 {
+func Sum(arr []float64) float64 {
 	sum := 0.0
 	for i := 0; i < len(arr); i++ {
 		sum += arr[i]
@@ -85,7 +105,7 @@ func sum(arr []float64) float64 {
 	return sum
 }
 
-func array_multiply_scalar(arr []float64, scalar float64) []float64 {
+func Array_multiply_scalar(arr []float64, scalar float64) []float64 {
 	output := []float64{}
 	for i := 0; i < len(arr); i++ {
 		output = append(output, arr[i] * scalar)
@@ -93,17 +113,17 @@ func array_multiply_scalar(arr []float64, scalar float64) []float64 {
 	return output
 }
 
-func (m model) forward(input []float64, y []float64) (float64, error) {
+func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 	outputs := []float64{}
 
-	if m.layer1.input_size != len(input) {//check if input size is correct
+	if m.Layer1.Input_size != len(input) {//check if input size is correct
 		return 0.0, errors.New("Invalid input size for layer 1")
 	}
-	outputs = m.layer1.forward(input)//forward layer 1
+	outputs = m.Layer1.Forward(input)//forward layer 1
 
 
-	if m.layer2.name == "nil" {
-		switch m.loss_function {
+	if m.Layer2.Name == "nil" {
+		switch m.Loss_function {
 		case "cross_entropy":
 			return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
 		case "mean_squared_error":
@@ -112,14 +132,14 @@ func (m model) forward(input []float64, y []float64) (float64, error) {
 			return loss_functions.SumSquaredRisiduals(outputs, y), nil
 		}
 	}
-	if m.layer2.input_size != len(outputs) {//check if input size is correct
+	if m.Layer2.Input_size != len(outputs) {//check if input size is correct
 		return 0.0, errors.New("Invalid input size for layer 2")
 	}
-	outputs = m.layer2.forward(outputs)//forward layer 2
+	outputs = m.Layer2.Forward(outputs)//forward layer 2
 
 
-	if m.layer3.name == "nil" {
-		switch m.loss_function {
+	if m.Layer3.Name == "nil" {
+		switch m.Loss_function {
 		case "cross_entropy":
 			return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
 		case "mean_squared_error":
@@ -128,14 +148,14 @@ func (m model) forward(input []float64, y []float64) (float64, error) {
 			return loss_functions.SumSquaredRisiduals(outputs, y), nil
 		}
 	}
-	if m.layer3.input_size != len(outputs) {//check if input size is correct
+	if m.Layer3.Input_size != len(outputs) {//check if input size is correct
 		return 0.0, errors.New("Invalid input size for layer 3")
 	}
-	outputs = m.layer3.forward(outputs)
+	outputs = m.Layer3.Forward(outputs)
 
 
-	if m.layer4.name == "nil" {
-		switch m.loss_function {
+	if m.Layer4.Name == "nil" {
+		switch m.Loss_function {
 		case "cross_entropy":
 			return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
 		case "mean_squared_error":
@@ -144,13 +164,15 @@ func (m model) forward(input []float64, y []float64) (float64, error) {
 			return loss_functions.SumSquaredRisiduals(outputs, y), nil
 		}
 	}
-	if m.layer4.input_size != len(outputs) {//check if input size is correct
+	if m.Layer4.Input_size != len(outputs) {//check if input size is correct
 		return 0.0, errors.New("Invalid input size for layer 4")
 	}
-	outputs = m.layer4.forward(outputs)//forward layer 4
-
-	switch m.loss_function {
+	outputs = m.Layer4.Forward(outputs)//forward layer 4
+	switch m.Loss_function {
 	case "cross_entropy":
+		fmt.Println("")
+		fmt.Println("outputs:",outputs)
+		fmt.Println("y:",y)
 		return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
 	case "mean_squared_error":
 		return loss_functions.MeanSquaredError(outputs, y), nil
@@ -161,173 +183,256 @@ func (m model) forward(input []float64, y []float64) (float64, error) {
 }
 
 
-func (m model) back(y []float64){
+func (m *Model) Back(input []float64, y []float64){
 	d_vals := []float64{}
-	switch m.loss_function {
+	d_loss := []float64{}
+	switch m.Loss_function {
 	case "cross_entropy":
-		if m.layer4.name != "nil" {
-			d_vals = loss_functions.CatergoricalCrossEntropy_derivative(m.layer4.activated_outputs, y)
-		}else if m.layer3.name != "nil" {
-			d_vals = loss_functions.CatergoricalCrossEntropy_derivative(m.layer3.activated_outputs, y)
-		}else if m.layer2.name != "nil" {
-			d_vals = loss_functions.CatergoricalCrossEntropy_derivative(m.layer2.activated_outputs, y)
+		if m.Layer4.Name != "nil" {
+			d_loss = loss_functions.CatergoricalCrossEntropy_derivative(m.Layer4.Activated_outputs, y)
+		}else if m.Layer3.Name != "nil" {
+			d_loss = loss_functions.CatergoricalCrossEntropy_derivative(m.Layer3.Activated_outputs, y)
+		}else if m.Layer2.Name != "nil" {
+			d_loss = loss_functions.CatergoricalCrossEntropy_derivative(m.Layer2.Activated_outputs, y)
 		}
 	case "mean_squared_error":
-		if m.layer4.name != "nil" {
-			d_vals = loss_functions.MeanSquaredError_derivative(m.layer4.activated_outputs, y)
-		}else if m.layer3.name != "nil" {
-			d_vals = loss_functions.MeanSquaredError_derivative(m.layer3.activated_outputs, y)
-		}else if m.layer2.name != "nil" {
-			d_vals = loss_functions.MeanSquaredError_derivative(m.layer2.activated_outputs, y)
+		if m.Layer4.Name != "nil" {
+			d_loss = loss_functions.MeanSquaredError_derivative(m.Layer4.Activated_outputs, y)
+		}else if m.Layer3.Name != "nil" {
+			d_loss = loss_functions.MeanSquaredError_derivative(m.Layer3.Activated_outputs, y)
+		}else if m.Layer2.Name != "nil" {
+			d_loss = loss_functions.MeanSquaredError_derivative(m.Layer2.Activated_outputs, y)
 		}
 	case "sum_squared_residual":
-		if m.layer4.name != "nil" {
-			d_vals = loss_functions.SumSquaredRisiduals_derivative(m.layer4.activated_outputs, y)
-		}else if m.layer3.name != "nil" {
-			d_vals = loss_functions.SumSquaredRisiduals_derivative(m.layer3.activated_outputs, y)
-		}else if m.layer2.name != "nil" {
-			d_vals = loss_functions.SumSquaredRisiduals_derivative(m.layer2.activated_outputs, y)
+		if m.Layer4.Name != "nil" {
+			d_loss = loss_functions.SumSquaredRisiduals_derivative(m.Layer4.Activated_outputs, y)
+		}else if m.Layer3.Name != "nil" {
+			d_loss = loss_functions.SumSquaredRisiduals_derivative(m.Layer3.Activated_outputs, y)
+		}else if m.Layer2.Name != "nil" {
+			d_loss = loss_functions.SumSquaredRisiduals_derivative(m.Layer2.Activated_outputs, y)
 		}
 	}
-	switch m.layer4.activation_func {
+	switch m.Layer4.Activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer4.outputs), d_vals) 
+		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer4.Outputs), d_loss) 
 	case "LeakyReLU":
-		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer4.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.LeakyReLU_derivative(m.Layer4.Outputs), d_loss)
 	case "tanh":
-		d_vals = array_multiply(activation_funcs.Tanh_derivative(m.layer4.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Tanh_derivative(m.Layer4.Outputs), d_loss)
 	case "ReLU":
-		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer4.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer4.Outputs), d_loss)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer4.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer4.Outputs), d_loss)
+	case "":
+		d_vals = d_loss
+	}
+	if m.Layer4.Name != "nil" {
+		for i := 0; i < len(m.Layer4.Weights); i++ {
+			m.Layer4.Gradients = append(m.Layer4.Gradients, []float64{})
+			for j:=0; j < len(m.Layer4.Weights[i]); j++ {
+				m.Layer4.Gradients[i] = append(m.Layer4.Gradients[i], d_vals[i]*m.Layer3.Activated_outputs[j]) 
+			}
+		}
+	}
+
+	if m.Layer4.Name != "nil" {
+		d_vals = []float64{}
+		for i := 0; i < len(m.Layer4.Weights[0]); i++ {
+			d_vals = append(d_vals, 0.0)
+		}
+
+		for k := 0; k < len(m.Layer4.Gradients[0]); k++ {
+			for l:=0; l < len(m.Layer4.Gradients); l++ {
+				d_vals[k] += m.Layer4.Gradients[l][k]
+
+			}
+		}
+	}
+	switch m.Layer3.Activation_func {
+	case "sigmoid":
+		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer3.Outputs), d_vals) 
+	case "LeakyReLU":
+		d_vals = Array_multiply(activation_funcs.LeakyReLU_derivative(m.Layer3.Outputs), d_vals)
+	case "tanh":
+		d_vals = Array_multiply(activation_funcs.Tanh_derivative(m.Layer3.Outputs), d_vals)
+	case "ReLU":
+		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer3.Outputs), d_vals)
+	case "softmax":
+		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer3.Outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
-	if m.layer4.name != "nil" {
-		for i := 0; i < len(m.layer4.weights); i++ {
-			m.layer4.gradients = append(m.layer4.gradients, []float64{})
-			for j:=0; j < len(m.layer4.weights[i]); j++ {
-				m.layer4.gradients[i] = append(m.layer4.gradients[i], d_vals[i]*m.layer3.activated_outputs[j]) 
+	
+	if m.Layer3.Name != "nil" {
+		for i := 0; i < len(m.Layer3.Weights); i++ {
+			m.Layer3.Gradients = append(m.Layer3.Gradients, []float64{})
+			for j:=0; j < len(m.Layer3.Weights[i]); j++ {
+				m.Layer3.Gradients[i] = append(m.Layer3.Gradients[i], d_vals[i]*m.Layer2.Activated_outputs[j]) 
 			}
 		}
 	}
-
-	if m.layer4.name != "nil" {
-		d_vals := []float64{}
-		for i := 0; i < len(m.layer4.weights); i++ {
-			for j:=0; j < len(m.layer4.weights[i]); j++ {
-				d_vals = append(d_vals, 0.0)
-				break
-			}
+	if m.Layer3.Name != "nil" {
+		d_vals = []float64{}
+		for i := 0; i < len(m.Layer3.Weights[0]); i++ {
+			d_vals = append(d_vals, 0.0)
 		}
-		for k := 0; k < len(m.layer4.gradients); k++ {
-			for l:=0; l < len(m.layer4.gradients[k]); l++ {
-				d_vals[l] += m.layer4.gradients[k][l]
+
+		for k := 0; k < len(m.Layer3.Gradients[0]); k++ {
+			for l:=0; l < len(m.Layer3.Gradients); l++ {
+				d_vals[k] += m.Layer3.Gradients[l][k]
 
 			}
 		}
 	}
-	switch m.layer3.activation_func {
+
+	switch m.Layer2.Activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer3.outputs), d_vals) 
+		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer2.Outputs), d_vals) 
 	case "LeakyReLU":
-		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer3.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.LeakyReLU_derivative(m.Layer2.Outputs), d_vals)
 	case "tanh":
-		d_vals = array_multiply(activation_funcs.Tanh_derivative(m.layer3.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Tanh_derivative(m.Layer2.Outputs), d_vals)
 	case "ReLU":
-		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer3.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer2.Outputs), d_vals)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer3.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer2.Outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
-
-	if m.layer3.name != "nil" {
-		for i := 0; i < len(m.layer3.weights); i++ {
-			m.layer4.gradients = append(m.layer3.gradients, []float64{})
-			for j:=0; j < len(m.layer3.weights[i]); j++ {
-				m.layer3.gradients[i] = append(m.layer3.gradients[i], d_vals[i]*m.layer2.activated_outputs[j]) 
+	if m.Layer2.Name != "nil" {
+		for i := 0; i < len(m.Layer2.Weights); i++ {
+			m.Layer2.Gradients = append(m.Layer2.Gradients, []float64{})
+			for j:=0; j < len(m.Layer2.Weights[i]); j++ {
+				m.Layer2.Gradients[i] = append(m.Layer2.Gradients[i], d_vals[i]*m.Layer1.Activated_outputs[j]) 
 			}
 		}
 	}
-	if m.layer3.name != "nil" {
-		d_vals := []float64{}
-		for i := 0; i < len(m.layer3.weights); i++ {
-			for j:=0; j < len(m.layer3.weights[i]); j++ {
-				d_vals = append(d_vals, 0.0)
-				break
-			}
+	if m.Layer2.Name != "nil" {
+		d_vals = []float64{}
+		for i := 0; i < len(m.Layer2.Weights[0]); i++ {
+			d_vals = append(d_vals, 0.0)
+			
 		}
-		for k := 0; k < len(m.layer3.gradients); k++ {
-			for l:=0; l < len(m.layer3.gradients[k]); l++ {
-				d_vals[l] += m.layer3.gradients[k][l]
+		for k := 0; k < len(m.Layer2.Gradients[0]); k++ {
+			for l:=0; l < len(m.Layer2.Gradients); l++ {
+				d_vals[k] += m.Layer2.Gradients[l][k]
 
 			}
 		}
 	}
-
-	switch m.layer2.activation_func {
+	switch m.Layer1.Activation_func {
 	case "sigmoid":
-		d_vals = array_multiply(activation_funcs.Sigmoid_derivative(m.layer2.outputs), d_vals) 
+		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer1.Outputs), d_vals) 
 	case "LeakyReLU":
-		d_vals = array_multiply(activation_funcs.LeakyReLU_derivative(m.layer2.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.LeakyReLU_derivative(m.Layer1.Outputs), d_vals)
 	case "tanh":
-		d_vals = array_multiply(activation_funcs.Tanh_derivative(m.layer2.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Tanh_derivative(m.Layer1.Outputs), d_vals)
 	case "ReLU":
-		d_vals = array_multiply(activation_funcs.ReLU_derivative(m.layer2.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer1.Outputs), d_vals)
 	case "softmax":
-		d_vals = array_multiply(activation_funcs.Softmax_derivative(m.layer2.outputs), d_vals)
+		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer1.Outputs), d_vals)
 	case "":
 		d_vals = d_vals
 	}
-	if m.layer2.name != "nil" {
-		for i := 0; i < len(m.layer2.weights); i++ {
-			m.layer4.gradients = append(m.layer2.gradients, []float64{})
-			for j:=0; j < len(m.layer2.weights[i]); j++ {
-				m.layer2.gradients[i] = append(m.layer2.gradients[i], d_vals[i]*m.layer1.activated_outputs[j]) 
+	if m.Layer1.Name != "nil" {
+		for i := 0; i < len(m.Layer1.Weights); i++ {
+			m.Layer1.Gradients = append(m.Layer1.Gradients, []float64{})
+			for j:=0; j < len(m.Layer1.Weights[i]); j++ {
+				m.Layer1.Gradients[i] = append(m.Layer1.Gradients[i], d_vals[i]*input[j]) 
 			}
 		}
 	}
+	if m.Layer1.Name != "nil" {
+		d_vals = []float64{}
+		for i := 0; i < len(m.Layer1.Weights[0]); i++ {
+			d_vals = append(d_vals, 0.0)
+			
+		}
+		for k := 0; k < len(m.Layer1.Gradients[0]); k++ {
+			for l:=0; l < len(m.Layer1.Gradients); l++ {
+				d_vals[k] += m.Layer1.Gradients[l][k]
+
+			}
+		}
+	}
+
 }
 
-func (m model) weight_update(learning_rate float64) {
-	if m.layer4.name != "nil" {
-		for i := 0; i < len(m.layer4.weights); i++ {
-			for j:=0; j < len(m.layer4.weights[i]); j++ {
-				m.layer4.weights[i][j] += -m.layer4.gradients[i][j]*learning_rate
+func (m Model) Weight_update(learning_rate float64) {
+	if m.Layer4.Name != "nil" {
+		for i := 0; i < len(m.Layer4.Weights); i++ {
+			for j:=0; j < len(m.Layer4.Weights[i]); j++ {
+				m.Layer4.Weights[i][j] += -m.Layer4.Gradients[i][j]*learning_rate
 			}
 		}
-		m.layer4.gradients = [][]float64{}
+		m.Layer4.Gradients = [][]float64{}
 	}
-	if m.layer3.name != "nil" {
-		for i := 0; i < len(m.layer3.weights); i++ {
-			for j:=0; j < len(m.layer3.weights[i]); j++ {
-				m.layer3.weights[i][j] += -m.layer3.gradients[i][j]*learning_rate
+	if m.Layer3.Name != "nil" {
+		for i := 0; i < len(m.Layer3.Weights); i++ {
+			for j:=0; j < len(m.Layer3.Weights[i]); j++ {
+				m.Layer3.Weights[i][j] += -m.Layer3.Gradients[i][j]*learning_rate
 			}
 		}
-		m.layer3.gradients = [][]float64{}
+		m.Layer3.Gradients = [][]float64{}
 	}
-	if m.layer2.name != "nil" {
-		for i := 0; i < len(m.layer2.weights); i++ {
-			for j:=0; j < len(m.layer2.weights[i]); j++ {
-				m.layer2.weights[i][j] += -m.layer2.gradients[i][j]*learning_rate
+	if m.Layer2.Name != "nil" {
+		for i := 0; i < len(m.Layer2.Weights); i++ {
+			for j:=0; j < len(m.Layer2.Weights[i]); j++ {
+				m.Layer2.Weights[i][j] += -m.Layer2.Gradients[i][j]*learning_rate
 			}
 		}
-		m.layer2.gradients = [][]float64{}
+		m.Layer2.Gradients = [][]float64{}
 	}
+	if m.Layer1.Name != "nil" {
+		for i := 0; i < len(m.Layer1.Weights); i++ {
+			for j:=0; j < len(m.Layer1.Weights[i]); j++ {
+				m.Layer1.Weights[i][j] += -m.Layer1.Gradients[i][j]*learning_rate
+			}
+		}
+		m.Layer1.Gradients = [][]float64{}
+	}
+	
 }
 
-func (m model) train(training_data [][]float64, labels [][]float64 ,learning_rate float64, epochs int) {
+func (m Model) Train(training_data [][]float64, labels [][]float64 ,learning_rate float64, epochs int) {
 	for i := 0; i < epochs; i++ {
 		for j := 0; j < len(training_data); j++ {
-			m.forward(training_data[j], labels[j])
-			m.back(labels[j])
-			m.weight_update(learning_rate)
+			m.Forward(training_data[j], labels[j])
+			fmt.Println("Layer4 Activated Outputs:",m.Layer4.Activated_outputs)
+			m.Back(training_data[j],labels[j])
+			m.Weight_update(learning_rate)
 		}
 	}
 }
 
-func one_hot(label int, num_classes int) []float64 {
+func (m Model) Predict(input []float64) []float64 {
+	m.Forward(input, []float64{})
+	return m.Layer3.Activated_outputs
+}
+
+func (m Model) Test(test_data [][]float64, labels [][]float64) float64 {
+	correct := 0
+	for i := 0; i < len(test_data); i++ {
+		m.Forward(test_data[i], labels[i])
+		if find_max(m.Layer4.Activated_outputs) == find_max(labels[i]) {
+			correct++
+		}
+	}	
+	return (float64(correct) / float64(len(test_data)))*100
+}
+
+func Array2D_to_1D( arr [][]float64) []float64 {
+	output := []float64{}
+	for i := 0; i < len(arr); i++ {
+		for j := 0; j < len(arr[i]); j++ {
+			output = append(output, arr[i][j])
+		}
+	}
+	return output
+}
+
+
+func One_hot(label int, num_classes int) []float64 {
 	output := []float64{}
 	for i := 0; i < num_classes; i++ {
 		if i == label {
@@ -339,17 +444,7 @@ func one_hot(label int, num_classes int) []float64 {
 	return output
 }
 
-func _2D_to_1D( arr [][]float64) []float64 {
-	output := []float64{}
-	for i := 0; i < len(arr); i++ {
-		for j := 0; j < len(arr[i]); j++ {
-			output = append(output, arr[i][j])
-		}
-	}
-	return output
-}
-
-func decrease_size(arr []float64) []float64 {
+func Decrease_size(arr []float64) []float64 {
 	output := []float64{}
 	for i := 0; i < len(arr); i++ {
 		output = append(output, arr[i]/255.0)
@@ -357,7 +452,7 @@ func decrease_size(arr []float64) []float64 {
 	return output
 }
 
-func unit8_to_float64(arr [][]uint8) [][]float64 {
+func Unit8_to_float64(arr [][]uint8) [][]float64 {
 	output := [][]float64{}
 	for i := 0; i < len(arr); i++ {
 		output = append(output, []float64{})
@@ -366,4 +461,14 @@ func unit8_to_float64(arr [][]uint8) [][]float64 {
 		}
 	}
 	return output
+}
+
+func find_max(arr []float64) int {
+	max := 0
+	for i := 0; i < len(arr); i++ {
+		if arr[i] > arr[max] {
+			max = i
+		}
+	}
+	return max
 }
