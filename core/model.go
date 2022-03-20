@@ -29,9 +29,6 @@ type Model struct {
 
 
 func (l *Layer) Forward(input []float64) []float64 {
-	fmt.Println("")
-	fmt.Println(l.Name)
-	fmt.Println(input)
 	outputs := []float64{}
 	for i := 0; i < len(l.Weights); i++ {
 		output := 0.0
@@ -42,10 +39,6 @@ func (l *Layer) Forward(input []float64) []float64 {
 	}
 	l.Outputs = outputs
 	l.Activated_outputs = l.Activation(outputs)
-
-	fmt.Println("Activated Outputs:",l.Activated_outputs)
-	fmt.Println("len(input):",len(input))
-	fmt.Println("len(l.Activated_outputs):",len(l.Activated_outputs))
 	return l.Activated_outputs
 }
 
@@ -74,7 +67,6 @@ func (l *Layer) Layer_init(input_node bool){
 	for i:=0; i < l.Num_neurons; i++ {
 		l.Weights = append(l.Weights, []float64{})
 		for j:=0; j < l.Input_size; j++ {
-			//rand.Seed(time.Now().UTC().UnixNano())
 			if input_node {
 				l.Weights[i] = append(l.Weights[i], 1.0)
 			}else {
@@ -170,9 +162,6 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 	outputs = m.Layer4.Forward(outputs)//forward layer 4
 	switch m.Loss_function {
 	case "cross_entropy":
-		fmt.Println("")
-		fmt.Println("outputs:",outputs)
-		fmt.Println("y:",y)
 		return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
 	case "mean_squared_error":
 		return loss_functions.MeanSquaredError(outputs, y), nil
@@ -398,7 +387,6 @@ func (m Model) Train(training_data [][]float64, labels [][]float64 ,learning_rat
 	for i := 0; i < epochs; i++ {
 		for j := 0; j < len(training_data); j++ {
 			m.Forward(training_data[j], labels[j])
-			fmt.Println("Layer4 Activated Outputs:",m.Layer4.Activated_outputs)
 			m.Back(training_data[j],labels[j])
 			m.Weight_update(learning_rate)
 		}
@@ -412,8 +400,9 @@ func (m Model) Predict(input []float64) []float64 {
 
 func (m Model) Test(test_data [][]float64, labels [][]float64) float64 {
 	correct := 0
-	for i := 0; i < len(test_data); i++ {
+	for i := 0; i < 100; i++ {
 		m.Forward(test_data[i], labels[i])
+		fmt.Println(find_max(m.Layer4.Activated_outputs), find_max(labels[i]))
 		if find_max(m.Layer4.Activated_outputs) == find_max(labels[i]) {
 			correct++
 		}

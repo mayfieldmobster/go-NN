@@ -34,7 +34,7 @@ func main() {
 		Name:"hidden_layer1",
 		Outputs:[]float64{},
 		Activated_outputs:[]float64{},
-		Activation_func:"LeakyReLU",
+		Activation_func:"ReLU",
 		Gradients:[][]float64{},
 	}
 	hidden_layer2 := &core.Layer{
@@ -44,7 +44,7 @@ func main() {
 		Name:"hidden_layer2",
 		Outputs:[]float64{},
 		Activated_outputs:[]float64{},
-		Activation_func:"",
+		Activation_func:"ReLU",
 		Gradients:[][]float64{},
 	}
 	output_layer := &core.Layer{
@@ -74,8 +74,11 @@ func main() {
 	//fmt.Println(len(model.Layer2.Weights[0]))
 	//fmt.Println(output_layer.Weights)
 	
-	model.Train(inputs, labels, 0.01, 100)
+	model.Train(inputs, labels, 0.000001, 100)
 	fmt.Println("Accuracy:",model.Test(inputs, labels), "%")
+	fmt.Println(model.Layer1.Weights)
+	fmt.Println(model.Layer2.Weights)
+	fmt.Println(model.Layer3.Weights)
 	fmt.Println(model.Layer4.Weights)
 
 }
