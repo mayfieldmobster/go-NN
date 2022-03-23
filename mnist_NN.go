@@ -4,6 +4,7 @@ import (
 	"NN/core"
 	"NN/mnist"
 	"fmt"
+	"time"
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 		Name:"hidden_layer1",
 		Outputs:[]float64{},
 		Activated_outputs:[]float64{},
-		Activation_func:"ReLU",
+		Activation_func:"sigmoid",
 		Gradients:[][]float64{},
 	}
 	hidden_layer2 := &core.Layer{
@@ -44,7 +45,7 @@ func main() {
 		Name:"hidden_layer2",
 		Outputs:[]float64{},
 		Activated_outputs:[]float64{},
-		Activation_func:"ReLU",
+		Activation_func:"",
 		Gradients:[][]float64{},
 	}
 	output_layer := &core.Layer{
@@ -58,8 +59,11 @@ func main() {
 		Gradients:[][]float64{},
 	}
 	input_layer.Layer_init(false)
+	time.Sleep(1 * time.Second)
 	hidden_layer1.Layer_init(false)
+	time.Sleep(1 * time.Second)
 	hidden_layer2.Layer_init(false)
+	time.Sleep(1 * time.Second)
 	output_layer.Layer_init(false)
 	
 	model := core.Model{
@@ -74,8 +78,8 @@ func main() {
 	//fmt.Println(len(model.Layer2.Weights[0]))
 	//fmt.Println(output_layer.Weights)
 	
-	model.Train(inputs, labels, 0.000001, 100)
-	fmt.Println("Accuracy:",model.Test(inputs, labels), "%")
+	model.Train(inputs, labels, 0.000001, 1)
+	fmt.Println("Accuracy:",model.Test(inputs, labels, 1000), "%")
 	fmt.Println(model.Layer1.Weights)
 	fmt.Println(model.Layer2.Weights)
 	fmt.Println(model.Layer3.Weights)

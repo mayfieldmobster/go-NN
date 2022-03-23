@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	//"os"
 )
 
 
@@ -71,9 +72,9 @@ func (l *Layer) Layer_init(input_node bool){
 				l.Weights[i] = append(l.Weights[i], 1.0)
 			}else {
 				if rand.Intn(2) == 0 {
-					l.Weights[i] = append(l.Weights[i], -rand.Float64())
+					l.Weights[i] = append(l.Weights[i], -rand.Float64()*0.1)
 				}else {
-					l.Weights[i] = append(l.Weights[i], rand.Float64())
+					l.Weights[i] = append(l.Weights[i], rand.Float64()*0.1)
 				}
 			}
 		}
@@ -109,7 +110,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 	outputs := []float64{}
 
 	if m.Layer1.Input_size != len(input) {//check if input size is correct
-		return 0.0, errors.New("Invalid input size for layer 1")
+		return 0.0, errors.New("invalid input size for layer 1")
 	}
 	outputs = m.Layer1.Forward(input)//forward layer 1
 
@@ -125,7 +126,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		}
 	}
 	if m.Layer2.Input_size != len(outputs) {//check if input size is correct
-		return 0.0, errors.New("Invalid input size for layer 2")
+		return 0.0, errors.New("invalid input size for layer 2")
 	}
 	outputs = m.Layer2.Forward(outputs)//forward layer 2
 
@@ -141,7 +142,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		}
 	}
 	if m.Layer3.Input_size != len(outputs) {//check if input size is correct
-		return 0.0, errors.New("Invalid input size for layer 3")
+		return 0.0, errors.New("invalid input size for layer 3")
 	}
 	outputs = m.Layer3.Forward(outputs)
 
@@ -157,7 +158,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		}
 	}
 	if m.Layer4.Input_size != len(outputs) {//check if input size is correct
-		return 0.0, errors.New("Invalid input size for layer 4")
+		return 0.0, errors.New("invalid input size for layer 4")
 	}
 	outputs = m.Layer4.Forward(outputs)//forward layer 4
 	switch m.Loss_function {
@@ -173,6 +174,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 
 
 func (m *Model) Back(input []float64, y []float64){
+	//fmt.Println("")
 	d_vals := []float64{}
 	d_loss := []float64{}
 	switch m.Loss_function {
@@ -201,6 +203,8 @@ func (m *Model) Back(input []float64, y []float64){
 			d_loss = loss_functions.SumSquaredRisiduals_derivative(m.Layer2.Activated_outputs, y)
 		}
 	}
+	//fmt.Println("d_loss: ", d_loss)
+	
 	switch m.Layer4.Activation_func {
 	case "sigmoid":
 		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer4.Outputs), d_loss) 
@@ -215,6 +219,8 @@ func (m *Model) Back(input []float64, y []float64){
 	case "":
 		d_vals = d_loss
 	}
+	//fmt.Println("d_vals AL1: ", d_vals)
+	
 	if m.Layer4.Name != "nil" {
 		for i := 0; i < len(m.Layer4.Weights); i++ {
 			m.Layer4.Gradients = append(m.Layer4.Gradients, []float64{})
@@ -225,18 +231,19 @@ func (m *Model) Back(input []float64, y []float64){
 	}
 
 	if m.Layer4.Name != "nil" {
-		d_vals = []float64{}
+		new_d_vals := []float64{}
+		
 		for i := 0; i < len(m.Layer4.Weights[0]); i++ {
-			d_vals = append(d_vals, 0.0)
-		}
-
-		for k := 0; k < len(m.Layer4.Gradients[0]); k++ {
-			for l:=0; l < len(m.Layer4.Gradients); l++ {
-				d_vals[k] += m.Layer4.Gradients[l][k]
-
+			new_d_val := 0.0
+			for j:=0; j < len(m.Layer4.Weights); j++ {
+				new_d_val += m.Layer4.Weights[j][i]*d_vals[j]
 			}
+			new_d_vals = append(new_d_vals, new_d_val)
 		}
+		d_vals = new_d_vals
 	}
+	//fmt.Println("d_vals WL1: ", d_vals)
+	
 	switch m.Layer3.Activation_func {
 	case "sigmoid":
 		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer3.Outputs), d_vals) 
@@ -248,10 +255,8 @@ func (m *Model) Back(input []float64, y []float64){
 		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer3.Outputs), d_vals)
 	case "softmax":
 		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer3.Outputs), d_vals)
-	case "":
-		d_vals = d_vals
 	}
-	
+	//fmt.Println("d_vals AL2: ", d_vals)
 	if m.Layer3.Name != "nil" {
 		for i := 0; i < len(m.Layer3.Weights); i++ {
 			m.Layer3.Gradients = append(m.Layer3.Gradients, []float64{})
@@ -261,19 +266,18 @@ func (m *Model) Back(input []float64, y []float64){
 		}
 	}
 	if m.Layer3.Name != "nil" {
-		d_vals = []float64{}
+		new_d_vals := []float64{}
+		
 		for i := 0; i < len(m.Layer3.Weights[0]); i++ {
-			d_vals = append(d_vals, 0.0)
-		}
-
-		for k := 0; k < len(m.Layer3.Gradients[0]); k++ {
-			for l:=0; l < len(m.Layer3.Gradients); l++ {
-				d_vals[k] += m.Layer3.Gradients[l][k]
-
+			new_d_val := 0.0
+			for j:=0; j < len(m.Layer3.Weights); j++ {
+				new_d_val += m.Layer3.Weights[j][i]*d_vals[j]
 			}
+			new_d_vals = append(new_d_vals, new_d_val)
 		}
+		d_vals = new_d_vals
 	}
-
+	//fmt.Println("d_vals WL2: ", d_vals)
 	switch m.Layer2.Activation_func {
 	case "sigmoid":
 		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer2.Outputs), d_vals) 
@@ -285,9 +289,8 @@ func (m *Model) Back(input []float64, y []float64){
 		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer2.Outputs), d_vals)
 	case "softmax":
 		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer2.Outputs), d_vals)
-	case "":
-		d_vals = d_vals
 	}
+	//fmt.Println("d_vals AL3: ", d_vals)
 	if m.Layer2.Name != "nil" {
 		for i := 0; i < len(m.Layer2.Weights); i++ {
 			m.Layer2.Gradients = append(m.Layer2.Gradients, []float64{})
@@ -297,18 +300,18 @@ func (m *Model) Back(input []float64, y []float64){
 		}
 	}
 	if m.Layer2.Name != "nil" {
-		d_vals = []float64{}
+		new_d_vals := []float64{}
+		
 		for i := 0; i < len(m.Layer2.Weights[0]); i++ {
-			d_vals = append(d_vals, 0.0)
-			
-		}
-		for k := 0; k < len(m.Layer2.Gradients[0]); k++ {
-			for l:=0; l < len(m.Layer2.Gradients); l++ {
-				d_vals[k] += m.Layer2.Gradients[l][k]
-
+			new_d_val := 0.0
+			for j:=0; j < len(m.Layer2.Weights); j++ {
+				new_d_val += m.Layer2.Weights[j][i]*d_vals[j]
 			}
+			new_d_vals = append(new_d_vals, new_d_val)
 		}
+		d_vals = new_d_vals
 	}
+	//fmt.Println("d_vals WL3: ", d_vals)
 	switch m.Layer1.Activation_func {
 	case "sigmoid":
 		d_vals = Array_multiply(activation_funcs.Sigmoid_derivative(m.Layer1.Outputs), d_vals) 
@@ -320,9 +323,8 @@ func (m *Model) Back(input []float64, y []float64){
 		d_vals = Array_multiply(activation_funcs.ReLU_derivative(m.Layer1.Outputs), d_vals)
 	case "softmax":
 		d_vals = Array_multiply(activation_funcs.Softmax_derivative(m.Layer1.Outputs), d_vals)
-	case "":
-		d_vals = d_vals
 	}
+	//fmt.Println("d_vals AL4: ", d_vals)
 	if m.Layer1.Name != "nil" {
 		for i := 0; i < len(m.Layer1.Weights); i++ {
 			m.Layer1.Gradients = append(m.Layer1.Gradients, []float64{})
@@ -331,29 +333,32 @@ func (m *Model) Back(input []float64, y []float64){
 			}
 		}
 	}
+	/*
 	if m.Layer1.Name != "nil" {
-		d_vals = []float64{}
+		new_d_vals := []float64{}
+		
 		for i := 0; i < len(m.Layer1.Weights[0]); i++ {
-			d_vals = append(d_vals, 0.0)
-			
-		}
-		for k := 0; k < len(m.Layer1.Gradients[0]); k++ {
-			for l:=0; l < len(m.Layer1.Gradients); l++ {
-				d_vals[k] += m.Layer1.Gradients[l][k]
-
+			new_d_val := 0.0
+			for j:=0; j < len(m.Layer1.Weights); j++ {
+				new_d_val += m.Layer1.Weights[j][i]*d_vals[j]
 			}
+			new_d_vals = append(new_d_vals, new_d_val)
 		}
+		d_vals = new_d_vals
 	}
+	*/
 
 }
 
 func (m Model) Weight_update(learning_rate float64) {
+	fmt.Println("")
 	if m.Layer4.Name != "nil" {
 		for i := 0; i < len(m.Layer4.Weights); i++ {
 			for j:=0; j < len(m.Layer4.Weights[i]); j++ {
 				m.Layer4.Weights[i][j] += -m.Layer4.Gradients[i][j]*learning_rate
 			}
 		}
+		fmt.Println(m.Layer4.Gradients)
 		m.Layer4.Gradients = [][]float64{}
 	}
 	if m.Layer3.Name != "nil" {
@@ -362,6 +367,7 @@ func (m Model) Weight_update(learning_rate float64) {
 				m.Layer3.Weights[i][j] += -m.Layer3.Gradients[i][j]*learning_rate
 			}
 		}
+		fmt.Println(m.Layer3.Gradients)
 		m.Layer3.Gradients = [][]float64{}
 	}
 	if m.Layer2.Name != "nil" {
@@ -370,6 +376,7 @@ func (m Model) Weight_update(learning_rate float64) {
 				m.Layer2.Weights[i][j] += -m.Layer2.Gradients[i][j]*learning_rate
 			}
 		}
+		fmt.Println(m.Layer2.Gradients)
 		m.Layer2.Gradients = [][]float64{}
 	}
 	if m.Layer1.Name != "nil" {
@@ -378,17 +385,22 @@ func (m Model) Weight_update(learning_rate float64) {
 				m.Layer1.Weights[i][j] += -m.Layer1.Gradients[i][j]*learning_rate
 			}
 		}
+		fmt.Println(m.Layer1.Gradients)
 		m.Layer1.Gradients = [][]float64{}
+		
 	}
-	
 }
 
 func (m Model) Train(training_data [][]float64, labels [][]float64 ,learning_rate float64, epochs int) {
 	for i := 0; i < epochs; i++ {
 		for j := 0; j < len(training_data); j++ {
+			//fmt.Printf("\n\nEpoch: %d\n", i)
 			m.Forward(training_data[j], labels[j])
 			m.Back(training_data[j],labels[j])
 			m.Weight_update(learning_rate)
+			if j == 10000 {
+				return
+			}
 		}
 	}
 }
@@ -398,9 +410,9 @@ func (m Model) Predict(input []float64) []float64 {
 	return m.Layer3.Activated_outputs
 }
 
-func (m Model) Test(test_data [][]float64, labels [][]float64) float64 {
+func (m Model) Test(test_data [][]float64, labels [][]float64, test_size int) float64 {
 	correct := 0
-	for i := 0; i < 100; i++ {
+	for i := 0; i < test_size; i++ {
 		m.Forward(test_data[i], labels[i])
 		fmt.Println(find_max(m.Layer4.Activated_outputs), find_max(labels[i]))
 		if find_max(m.Layer4.Activated_outputs) == find_max(labels[i]) {
@@ -414,7 +426,7 @@ func Array2D_to_1D( arr [][]float64) []float64 {
 	output := []float64{}
 	for i := 0; i < len(arr); i++ {
 		for j := 0; j < len(arr[i]); j++ {
-			output = append(output, arr[i][j])
+			output = append(output, arr[j][i])
 		}
 	}
 	return output
