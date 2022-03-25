@@ -14,10 +14,12 @@ import (
 type Layer struct {
 	Input_size, Num_neurons int
 	Weights [][]float64
+	Bias []float64
 	Name, Activation_func string
 	Outputs []float64
 	Activated_outputs []float64
 	Gradients [][]float64
+	Bias_gradients []float64
 }
 
 type Model struct {
@@ -36,6 +38,7 @@ func (l *Layer) Forward(input []float64) []float64 {
 		for j := 0; j < len(l.Weights[i]); j++ {
 			output += l.Weights[i][j] * input[j]
 		}
+		output += l.Bias[i]
 		outputs = append(outputs, output)
 	}
 	l.Outputs = outputs
@@ -67,6 +70,11 @@ func (l *Layer) Layer_init(input_node bool){
 	rand.Seed(time.Now().UTC().UnixNano())
 	for i:=0; i < l.Num_neurons; i++ {
 		l.Weights = append(l.Weights, []float64{})
+		if rand.Intn(2) == 0 {
+			l.Bias = append(l.Bias, -rand.Float64())
+		}else {
+			l.Bias = append(l.Bias, rand.Float64())
+		}
 		for j:=0; j < l.Input_size; j++ {
 			if input_node {
 				l.Weights[i] = append(l.Weights[i], 1.0)
@@ -113,7 +121,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		return 0.0, errors.New("invalid input size for layer 1")
 	}
 	outputs = m.Layer1.Forward(input)//forward layer 1
-
+	fmt.Println("Layer 1: ", outputs)
 
 	if m.Layer2.Name == "nil" {
 		switch m.Loss_function {
@@ -129,7 +137,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		return 0.0, errors.New("invalid input size for layer 2")
 	}
 	outputs = m.Layer2.Forward(outputs)//forward layer 2
-
+	fmt.Println("Layer 2: ", outputs)
 
 	if m.Layer3.Name == "nil" {
 		switch m.Loss_function {
@@ -145,7 +153,7 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		return 0.0, errors.New("invalid input size for layer 3")
 	}
 	outputs = m.Layer3.Forward(outputs)
-
+	fmt.Println("Layer 3: ", outputs)
 
 	if m.Layer4.Name == "nil" {
 		switch m.Loss_function {
@@ -161,6 +169,8 @@ func (m *Model) Forward(input []float64, y []float64) (float64, error) {
 		return 0.0, errors.New("invalid input size for layer 4")
 	}
 	outputs = m.Layer4.Forward(outputs)//forward layer 4
+	fmt.Println("Layer 4: ", outputs)
+	
 	switch m.Loss_function {
 	case "cross_entropy":
 		return loss_functions.CatergoricalCrossEntropy(outputs, y), nil
@@ -225,8 +235,11 @@ func (m *Model) Back(input []float64, y []float64){
 		for i := 0; i < len(m.Layer4.Weights); i++ {
 			m.Layer4.Gradients = append(m.Layer4.Gradients, []float64{})
 			for j:=0; j < len(m.Layer4.Weights[i]); j++ {
-				m.Layer4.Gradients[i] = append(m.Layer4.Gradients[i], d_vals[i]*m.Layer3.Activated_outputs[j]) 
+				m.Layer4.Gradients[i] = append(m.Layer4.Gradients[i], (d_vals[i]*m.Layer3.Activated_outputs[j])) 
 			}
+		}
+		for i := 0; i < len(m.Layer4.Bias); i++ {
+			m.Layer4.Bias_gradients = append(m.Layer4.Bias_gradients, d_vals[i])
 		}
 	}
 
@@ -238,6 +251,7 @@ func (m *Model) Back(input []float64, y []float64){
 			for j:=0; j < len(m.Layer4.Weights); j++ {
 				new_d_val += m.Layer4.Weights[j][i]*d_vals[j]
 			}
+			new_d_val /= float64(len(m.Layer4.Weights))
 			new_d_vals = append(new_d_vals, new_d_val)
 		}
 		d_vals = new_d_vals
@@ -261,8 +275,11 @@ func (m *Model) Back(input []float64, y []float64){
 		for i := 0; i < len(m.Layer3.Weights); i++ {
 			m.Layer3.Gradients = append(m.Layer3.Gradients, []float64{})
 			for j:=0; j < len(m.Layer3.Weights[i]); j++ {
-				m.Layer3.Gradients[i] = append(m.Layer3.Gradients[i], d_vals[i]*m.Layer2.Activated_outputs[j]) 
+				m.Layer3.Gradients[i] = append(m.Layer3.Gradients[i], (d_vals[i]*m.Layer2.Activated_outputs[j])) 
 			}
+		}
+		for i := 0; i < len(m.Layer3.Bias); i++ {
+			m.Layer3.Bias_gradients = append(m.Layer3.Bias_gradients, d_vals[i])
 		}
 	}
 	if m.Layer3.Name != "nil" {
@@ -273,6 +290,7 @@ func (m *Model) Back(input []float64, y []float64){
 			for j:=0; j < len(m.Layer3.Weights); j++ {
 				new_d_val += m.Layer3.Weights[j][i]*d_vals[j]
 			}
+			new_d_val /= float64(len(m.Layer3.Weights))
 			new_d_vals = append(new_d_vals, new_d_val)
 		}
 		d_vals = new_d_vals
@@ -295,8 +313,11 @@ func (m *Model) Back(input []float64, y []float64){
 		for i := 0; i < len(m.Layer2.Weights); i++ {
 			m.Layer2.Gradients = append(m.Layer2.Gradients, []float64{})
 			for j:=0; j < len(m.Layer2.Weights[i]); j++ {
-				m.Layer2.Gradients[i] = append(m.Layer2.Gradients[i], d_vals[i]*m.Layer1.Activated_outputs[j]) 
+				m.Layer2.Gradients[i] = append(m.Layer2.Gradients[i], (d_vals[i]*m.Layer1.Activated_outputs[j]))	 
 			}
+		}
+		for i := 0; i < len(m.Layer2.Bias); i++ {
+			m.Layer2.Bias_gradients = append(m.Layer2.Bias_gradients, d_vals[i])
 		}
 	}
 	if m.Layer2.Name != "nil" {
@@ -307,6 +328,7 @@ func (m *Model) Back(input []float64, y []float64){
 			for j:=0; j < len(m.Layer2.Weights); j++ {
 				new_d_val += m.Layer2.Weights[j][i]*d_vals[j]
 			}
+			new_d_val /= float64(len(m.Layer2.Weights))
 			new_d_vals = append(new_d_vals, new_d_val)
 		}
 		d_vals = new_d_vals
@@ -329,8 +351,11 @@ func (m *Model) Back(input []float64, y []float64){
 		for i := 0; i < len(m.Layer1.Weights); i++ {
 			m.Layer1.Gradients = append(m.Layer1.Gradients, []float64{})
 			for j:=0; j < len(m.Layer1.Weights[i]); j++ {
-				m.Layer1.Gradients[i] = append(m.Layer1.Gradients[i], d_vals[i]*input[j]) 
+				m.Layer1.Gradients[i] = append(m.Layer1.Gradients[i], (d_vals[i]*input[j])) 
 			}
+		}
+		for i := 0; i < len(m.Layer1.Bias); i++ {
+			m.Layer4.Bias_gradients = append(m.Layer1.Bias_gradients, d_vals[i])
 		}
 	}
 	/*
@@ -394,13 +419,12 @@ func (m Model) Weight_update(learning_rate float64) {
 func (m Model) Train(training_data [][]float64, labels [][]float64 ,learning_rate float64, epochs int) {
 	for i := 0; i < epochs; i++ {
 		for j := 0; j < len(training_data); j++ {
-			//fmt.Printf("\n\nEpoch: %d\n", i)
+			fmt.Printf("\n\nEpoch: %d\n", j)
 			m.Forward(training_data[j], labels[j])
 			m.Back(training_data[j],labels[j])
 			m.Weight_update(learning_rate)
-			if j == 10000 {
-				return
-			}
+			
+			
 		}
 	}
 }

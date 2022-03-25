@@ -78,11 +78,11 @@ func main() {
 	//fmt.Println(len(model.Layer2.Weights[0]))
 	//fmt.Println(output_layer.Weights)
 	
-	model.Train(inputs, labels, 0.000001, 1)
+	model.Train(inputs, labels, 0.0001, 1)
 	fmt.Println("Accuracy:",model.Test(inputs, labels, 1000), "%")
-	fmt.Println(model.Layer1.Weights)
-	fmt.Println(model.Layer2.Weights)
-	fmt.Println(model.Layer3.Weights)
+	//fmt.Println(model.Layer1.Weights)
+	//fmt.Println(model.Layer2.Weights)
+	//fmt.Println(model.Layer3.Weights)
 	fmt.Println(model.Layer4.Weights)
 
 }
