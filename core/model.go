@@ -145,9 +145,9 @@ func (l *Layer) Layer_init(input_node bool){
 				l.Weights[i] = append(l.Weights[i], 1.0)
 			}else {
 				if rand.Intn(2) == 0 {
-					l.Weights[i] = append(l.Weights[i], -rand.Float64()*0.1)
+					l.Weights[i] = append(l.Weights[i], -rand.Float64()*0.01)
 				}else {
-					l.Weights[i] = append(l.Weights[i], rand.Float64()*0.1)
+					l.Weights[i] = append(l.Weights[i], rand.Float64()*0.01)
 				}
 			}
 		}

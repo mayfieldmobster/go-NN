@@ -31,7 +31,7 @@ func main() {
 	}
 	hidden_layer1 := &core.Layer{
 		Input_size:32,
-		Num_neurons:64,
+		Num_neurons:10,
 		Weights:[][]float64{},
 		Name:"hidden_layer1",
 		Outputs:[]float64{},
@@ -40,8 +40,8 @@ func main() {
 		Gradients:[]float64{},
 	}
 	hidden_layer2 := &core.Layer{
-		Input_size:64,
-		Num_neurons:32,
+		Input_size:10,
+		Num_neurons:10,
 		Weights:[][]float64{},
 		Name:"hidden_layer2",
 		Outputs:[]float64{},
@@ -50,7 +50,7 @@ func main() {
 		Gradients:[]float64{},
 	}
 	output_layer := &core.Layer{
-		Input_size:32,
+		Input_size:10,
 		Num_neurons:10,
 		Weights:[][]float64{},
 		Name:"output_layer",
