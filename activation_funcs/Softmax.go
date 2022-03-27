@@ -21,3 +21,11 @@ func Softmax_derivative(arr []float64) []float64 {
 	}
 	return y
 }
+
+func CatergoricalCrossEntropy_Softmax_derivative(arr []float64, lables []float64) []float64 {
+	y := []float64{}
+	for i := 0; i < len(arr); i++ {
+		y = append(y, arr[i] - lables[i])
+	}
+	return y
+}

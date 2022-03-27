@@ -30,5 +30,11 @@ func main2() {
 	for i := 0; i < 10; i++ {
 		fmt.Println(rand.Intn(2))
 	}
-	
+	num_of_digits := []int64{0,0,0,0,0,0,0,0,0,0}
+	for _,data := range dataSet.Data{
+		num_of_digits[data.Digit] += 1
+	}
+	for i,num := range num_of_digits{
+		fmt.Println(i,num)
+	}
 }
